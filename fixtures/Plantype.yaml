@@ -1,0 +1,9 @@
+App\Entity\Plantypes:
+  plantypes_1:
+    name: 'végétarien'
+  plantypes_2:
+    name: 'sans lactose'
+  plantypes_3:
+    name: 'sans sel'
+  plantypes_4:
+    name: 'sans gluten'

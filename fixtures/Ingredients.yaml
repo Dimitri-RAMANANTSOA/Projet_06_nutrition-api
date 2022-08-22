@@ -1,0 +1,4 @@
+App\Entity\Ingredients:
+  ingredients_{1..20}:
+    name: <word()>
+    isAllergen : <numberBetween(0,1)>

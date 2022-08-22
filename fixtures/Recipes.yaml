@@ -1,0 +1,10 @@
+App\Entity\Recipes:
+  recipes_{1..10}:
+    title: <word()>
+    description: <paragraph()>
+    setupTime: <numberBetween(1,10)>
+    restTime: <numberBetween(1,10)>
+    steps: <paragraph()>
+    ingredients: '[@ingredients_*,@ingredients_*]'
+    plantype: '[@plantypes_*]'
+    createdAt: <dateTimeThisDecade()>
