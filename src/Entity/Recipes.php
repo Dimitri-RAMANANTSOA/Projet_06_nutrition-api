@@ -2,56 +2,102 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\RecipesRepository;
+use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: RecipesRepository::class)]
 #[ORM\HasLifecycleCallbacks]
-#[ApiResource]
+#[ApiResource(
+    normalizationContext: ['groups' => ['recipes:read']],
+    denormalizationContext: ['groups' => ['recipes:write']],
+    collectionOperations: [
+        'get',
+        'post' => ["security" => "is_granted('ROLE_ADMIN')"]
+    ],
+    itemOperations: [
+        'get',
+        'patch' => ["security" => "is_granted('ROLE_ADMIN')"],
+        'delete' => ["security" => "is_granted('ROLE_ADMIN')"]
+    ],
+)]
 class Recipes
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[
+        ORM\Column,
+        Groups(['recipes:read'])
+    ]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[
+        ORM\Column(length: 255),
+        Groups(['recipes:read', 'recipes:write'])
+    ]
     private ?string $title = null;
 
-    #[ORM\Column(type: Types::TEXT)]
+    #[
+        ORM\Column(type: Types::TEXT),
+        Groups(['recipes:read', 'recipes:write'])
+    ]
     private ?string $description = null;
 
-    #[ORM\Column(length: 255)]
+    #[
+        ORM\Column(length: 255),
+        Groups(['recipes:read', 'recipes:write'])
+    ]
     private ?string $setupTime = null;
 
-    #[ORM\Column(length: 255)]
+    #[
+        ORM\Column(length: 255),
+        Groups(['recipes:read', 'recipes:write'])
+    ]
     private ?string $restTime = null;
 
-    #[ORM\Column(length: 255)]
+    #[
+        ORM\Column(length: 255),
+        Groups(['recipes:read', 'recipes:write'])
+    ]
     private ?string $steps = null;
 
-    #[ORM\ManyToMany(targetEntity: Ingredients::class, inversedBy: 'recipes')]
+    #[
+        ORM\ManyToMany(targetEntity: Ingredients::class, inversedBy: 'recipes'),
+        Groups(['recipes:read', 'recipes:write'])
+    ]
     private Collection $ingredients;
 
-    #[ORM\ManyToMany(targetEntity: Plantypes::class, inversedBy: 'recipes')]
+    #[
+        ORM\ManyToMany(targetEntity: Plantypes::class, inversedBy: 'recipes'),
+        Groups(['recipes:read', 'recipes:write'])
+    ]
     private Collection $plantype;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[
+        ORM\Column(type: Types::DATETIME_MUTABLE),
+        Groups(['recipes:read'])
+    ]
     private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[
+        ORM\Column(type: Types::DATETIME_MUTABLE),
+        Groups(['recipes:read'])
+    ]
     private ?\DateTimeInterface $updatedAt = null;
 
-    #[ORM\Column]
+    #[
+        ORM\Column,
+        Groups(['recipes:read', 'recipes:write'])
+    ]
     private ?bool $isPublic = false;
 
     public function __construct()
     {
-        //$this->createdAt = new \DateTime('now');
+        $this->createdAt = new \DateTime('now');
         $this->ingredients = new ArrayCollection();
         $this->plantype = new ArrayCollection();
     }

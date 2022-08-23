@@ -2,28 +2,54 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiResource;
-use App\Repository\IngredientsRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\IngredientsRepository;
+use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Core\Annotation\ApiResource;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: IngredientsRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    normalizationContext: ['groups' => ['ingredients:read']],
+    denormalizationContext: ['groups' => ['ingredients:write']],
+    paginationItemsPerPage: 10,
+    paginationMaximumItemsPerPage: 100,
+    paginationClientItemsPerPage: true,
+    collectionOperations: [
+        'get',
+        'post'
+    ],
+    itemOperations: [
+        'get',
+        'patch',
+        'delete'
+    ],
+)]
 class Ingredients
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['ingredients:read', 'ingredients:write', 'recipes:read'])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[
+        ORM\Column(length: 255),
+        Groups(['ingredients:read', 'ingredients:write', 'recipes:read'])
+    ]
     private ?string $name = null;
 
-    #[ORM\Column]
+    #[
+        ORM\Column,
+        Groups(['ingredients:read', 'ingredients:write', 'recipes:read'])
+    ]
     private ?bool $isAllergen = null;
 
-    #[ORM\ManyToMany(targetEntity: Recipes::class, mappedBy: 'ingredients')]
+    #[
+        ORM\ManyToMany(targetEntity: Recipes::class, mappedBy: 'ingredients'),
+        Groups(['ingredients:read', 'ingredients:write'])
+    ]
     private Collection $recipes;
 
     public function __construct()

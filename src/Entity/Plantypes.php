@@ -2,25 +2,48 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiResource;
-use App\Repository\PlantypesRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\PlantypesRepository;
+use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Core\Annotation\ApiResource;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: PlantypesRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    normalizationContext: ['groups' => ['plantypes:read']],
+    denormalizationContext: ['groups' => ['plantypes:write']],
+    paginationItemsPerPage: 10,
+    paginationMaximumItemsPerPage: 100,
+    paginationClientItemsPerPage: true,
+    collectionOperations: [
+        'get',
+        'post'
+    ],
+    itemOperations: [
+        'get',
+        'patch',
+        'delete'
+    ],
+)]
 class Plantypes
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['plantypes:read', 'plantypes:write', 'recipes:read'])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[
+        ORM\Column(length: 255),
+        Groups(['plantypes:read', 'plantypes:write', 'recipes:read'])
+    ]
     private ?string $name = null;
 
-    #[ORM\ManyToMany(targetEntity: Recipes::class, mappedBy: 'plantype')]
+    #[
+        ORM\ManyToMany(targetEntity: Recipes::class, mappedBy: 'plantype'),
+        Groups(['plantypes:read', 'plantypes:write'])
+    ]
     private Collection $recipes;
 
     public function __construct()
