@@ -31,12 +31,12 @@ class Plantypes
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['plantypes:read', 'plantypes:write', 'recipes:read'])]
+    #[Groups(['plantypes:read', 'plantypes:write', 'recipes:read','user:read'])]
     private ?int $id = null;
 
     #[
         ORM\Column(length: 255),
-        Groups(['plantypes:read', 'plantypes:write', 'recipes:read'])
+        Groups(['plantypes:read', 'plantypes:write', 'recipes:read','user:read'])
     ]
     private ?string $name = null;
 
@@ -46,9 +46,13 @@ class Plantypes
     ]
     private Collection $recipes;
 
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'plan')]
+    private Collection $users;
+
     public function __construct()
     {
         $this->recipes = new ArrayCollection();
+        $this->users = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -90,6 +94,33 @@ class Plantypes
     {
         if ($this->recipes->removeElement($recipe)) {
             $recipe->removePlantype($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function getUsers(): Collection
+    {
+        return $this->users;
+    }
+
+    public function addUser(User $user): self
+    {
+        if (!$this->users->contains($user)) {
+            $this->users->add($user);
+            $user->addPlan($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUser(User $user): self
+    {
+        if ($this->users->removeElement($user)) {
+            $user->removePlan($this);
         }
 
         return $this;

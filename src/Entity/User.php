@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Entity\User;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
 use ApiPlatform\Core\Annotation\ApiResource;
@@ -64,6 +66,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     private $passwordHasherFactory;
+
+    #[
+        ORM\ManyToMany(targetEntity: Ingredients::class, inversedBy: 'users'),
+        Groups(['user:read', 'user:write'])
+    ]
+    private Collection $allergen;
+
+    #[
+        ORM\ManyToMany(targetEntity: Plantypes::class, inversedBy: 'users'),
+        Groups(['user:read', 'user:write'])
+    ]
+    private Collection $plan;
+
+    public function __construct()
+    {
+        $this->allergen = new ArrayCollection();
+        $this->plan = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -146,5 +166,53 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    /**
+     * @return Collection<int, Ingredients>
+     */
+    public function getAllergen(): Collection
+    {
+        return $this->allergen;
+    }
+
+    public function addAllergen(Ingredients $allergen): self
+    {
+        if (!$this->allergen->contains($allergen)) {
+            $this->allergen->add($allergen);
+        }
+
+        return $this;
+    }
+
+    public function removeAllergen(Ingredients $allergen): self
+    {
+        $this->allergen->removeElement($allergen);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Plantypes>
+     */
+    public function getPlan(): Collection
+    {
+        return $this->plan;
+    }
+
+    public function addPlan(Plantypes $plan): self
+    {
+        if (!$this->plan->contains($plan)) {
+            $this->plan->add($plan);
+        }
+
+        return $this;
+    }
+
+    public function removePlan(Plantypes $plan): self
+    {
+        $this->plan->removeElement($plan);
+
+        return $this;
     }
 }

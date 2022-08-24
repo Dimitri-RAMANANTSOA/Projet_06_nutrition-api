@@ -31,18 +31,18 @@ class Ingredients
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['ingredients:read', 'ingredients:write', 'recipes:read'])]
+    #[Groups(['ingredients:read', 'ingredients:write', 'recipes:read','user:read'])]
     private ?int $id = null;
 
     #[
         ORM\Column(length: 255),
-        Groups(['ingredients:read', 'ingredients:write', 'recipes:read'])
+        Groups(['ingredients:read', 'ingredients:write', 'recipes:read','user:read'])
     ]
     private ?string $name = null;
 
     #[
         ORM\Column,
-        Groups(['ingredients:read', 'ingredients:write', 'recipes:read'])
+        Groups(['ingredients:read', 'ingredients:write', 'recipes:read','user:read'])
     ]
     private ?bool $isAllergen = null;
 
@@ -52,9 +52,13 @@ class Ingredients
     ]
     private Collection $recipes;
 
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'allergen')]
+    private Collection $users;
+
     public function __construct()
     {
         $this->recipes = new ArrayCollection();
+        $this->users = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -108,6 +112,33 @@ class Ingredients
     {
         if ($this->recipes->removeElement($recipe)) {
             $recipe->removeIngredient($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function getUsers(): Collection
+    {
+        return $this->users;
+    }
+
+    public function addUser(User $user): self
+    {
+        if (!$this->users->contains($user)) {
+            $this->users->add($user);
+            $user->addAllergen($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUser(User $user): self
+    {
+        if ($this->users->removeElement($user)) {
+            $user->removeAllergen($this);
         }
 
         return $this;
