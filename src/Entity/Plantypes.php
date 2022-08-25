@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Constraints;
 
 #[ORM\Entity(repositoryClass: PlantypesRepository::class)]
 #[ApiResource(
@@ -36,7 +37,9 @@ class Plantypes
 
     #[
         ORM\Column(length: 255),
-        Groups(['plantypes:read', 'plantypes:write', 'recipes:read','user:read'])
+        Groups(['plantypes:read', 'plantypes:write', 'recipes:read','user:read']),
+        Constraints\NotBlank,
+        Constraints\Length(min: 5, max: 100)
     ]
     private ?string $name = null;
 

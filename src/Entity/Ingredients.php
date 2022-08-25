@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Constraints;
 
 #[ORM\Entity(repositoryClass: IngredientsRepository::class)]
 #[ApiResource(
@@ -36,23 +37,31 @@ class Ingredients
 
     #[
         ORM\Column(length: 255),
-        Groups(['ingredients:read', 'ingredients:write', 'recipes:read','user:read'])
+        Groups(['ingredients:read', 'ingredients:write', 'recipes:read','user:read']),
+        Constraints\NotBlank,
+        Constraints\Length(min: 5, max: 100)
     ]
     private ?string $name = null;
 
     #[
         ORM\Column,
-        Groups(['ingredients:read', 'ingredients:write', 'recipes:read','user:read'])
+        Groups(['ingredients:read', 'ingredients:write', 'recipes:read','user:read']),
+        Constraints\NotBlank,
+        Constraints\Range(min: 0, max: 1)
     ]
     private ?bool $isAllergen = null;
 
     #[
         ORM\ManyToMany(targetEntity: Recipes::class, mappedBy: 'ingredients'),
-        Groups(['ingredients:read', 'ingredients:write'])
+        Groups(['ingredients:read', 'ingredients:write']),
+        Constraints\NotBlank
     ]
     private Collection $recipes;
 
-    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'allergen')]
+    #[
+        ORM\ManyToMany(targetEntity: User::class, mappedBy: 'allergen'),
+        Constraints\NotBlank
+    ]
     private Collection $users;
 
     public function __construct()

@@ -4,8 +4,6 @@
 namespace App\Doctrine;
 
 use App\Entity\Recipes;
-use App\Entity\Plantypes;
-use App\Entity\Ingredients;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\Security\Core\Security;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Util\QueryNameGeneratorInterface;
@@ -33,12 +31,12 @@ final class CurrentUserExtension implements QueryCollectionExtensionInterface, Q
 
     private function addWhere(QueryBuilder $queryBuilder, string $resourceClass): void
     {
-        if (Recipes::class !== $resourceClass || $this->security->isGranted('ROLE_ADMIN')) {
+        if (Recipes::class == $resourceClass && $this->security->isGranted('ROLE_ADMIN')) {
             return;
         }
 
-        if (Recipes::class !== $resourceClass || $this->security->isGranted('ROLE_USER')) {
-
+        if (Recipes::class == $resourceClass && $this->security->isGranted('ROLE_USER')) {
+            
             $user = $this->security->getUser();
             $allergens = $user->getAllergen();
             $plans = $user->getPlan();
@@ -49,9 +47,13 @@ final class CurrentUserExtension implements QueryCollectionExtensionInterface, Q
                 $allergentab[]= $allergen->getId();
             }
 
+            if(empty($allergentab)){return;}
+
             foreach($plans as $plan){
                 $plantab[]= $plan->getId();
             }
+
+            if(empty($plantab)){return;}
 
             $rootAlias = $queryBuilder->getRootAliases()[0];
             $qb = $queryBuilder->getEntityManager()->createQueryBuilder();
@@ -79,7 +81,11 @@ final class CurrentUserExtension implements QueryCollectionExtensionInterface, Q
             return;
         }
 
-        $rootAlias = $queryBuilder->getRootAliases()[0];
-        $queryBuilder->andWhere(sprintf('%s.isPublic = 1', $rootAlias));
+        if (Recipes::class == $resourceClass){
+            $rootAlias = $queryBuilder->getRootAliases()[0];
+            $queryBuilder->andWhere(sprintf('%s.isPublic = 1', $rootAlias));        
+            return;
+        }
+        
     }
 }

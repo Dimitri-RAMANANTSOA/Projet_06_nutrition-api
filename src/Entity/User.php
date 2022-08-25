@@ -14,6 +14,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasher;
 use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactory;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Validator\Constraints as Constraints;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ApiResource(
@@ -40,19 +41,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\GeneratedValue]
     #[
         ORM\Column,
-        Groups(['user:read'])
+        Groups(['user:read','feedback:read'])
     ]
     private ?int $id = null;
 
     #[
         ORM\Column(length: 180, unique: true),
-        Groups(['user:read', 'user:write'])
+        Groups(['user:read', 'user:write','feedback:read']),
+        Constraints\NotBlank,
+        Constraints\Email,
+        Constraints\Length(min: 5, max: 100)
     ]
     private ?string $email = null;
 
     #[
         ORM\Column,
-        Groups(['user:read', 'user:write'])
+        Groups(['user:read', 'user:write','feedback:read'])
     ]
     private array $roles = [];
 
@@ -61,7 +65,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[
         ORM\Column,
-        Groups(['user:write'])
+        Groups(['user:write']),
+        Constraints\NotBlank,
+        Constraints\Length(min: 8, max: 100)
     ]
     private ?string $password = null;
 
@@ -79,10 +85,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     ]
     private Collection $plan;
 
+    #[
+        ORM\OneToMany(mappedBy: 'owner', targetEntity: Feedback::class),
+        Groups(['user:read'])
+    ]
+    private Collection $feedback;
+
     public function __construct()
     {
         $this->allergen = new ArrayCollection();
         $this->plan = new ArrayCollection();
+        $this->feedback = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -212,6 +225,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removePlan(Plantypes $plan): self
     {
         $this->plan->removeElement($plan);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Feedback>
+     */
+    public function getFeedback(): Collection
+    {
+        return $this->feedback;
+    }
+
+    public function addFeedback(Feedback $feedback): self
+    {
+        if (!$this->feedback->contains($feedback)) {
+            $this->feedback->add($feedback);
+            $feedback->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFeedback(Feedback $feedback): self
+    {
+        if ($this->feedback->removeElement($feedback)) {
+            // set the owning side to null (unless already changed)
+            if ($feedback->getOwner() === $this) {
+                $feedback->setOwner(null);
+            }
+        }
 
         return $this;
     }
