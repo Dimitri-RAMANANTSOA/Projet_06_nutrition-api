@@ -5,6 +5,7 @@ namespace App\Doctrine;
 
 use App\Entity\Recipes;
 use App\Entity\Plantypes;
+use App\Entity\Ingredients;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\Security\Core\Security;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Util\QueryNameGeneratorInterface;
@@ -39,56 +40,46 @@ final class CurrentUserExtension implements QueryCollectionExtensionInterface, Q
         if (Recipes::class !== $resourceClass || $this->security->isGranted('ROLE_USER')) {
 
             $user = $this->security->getUser();
+            $allergens = $user->getAllergen();
+            $plans = $user->getPlan();
+            $allergentab = [];
+            $plantab = [];
+
+            foreach($allergens as $allergen){
+                $allergentab[]= $allergen->getId();
+            }
+
+            foreach($plans as $plan){
+                $plantab[]= $plan->getId();
+            }
 
             $rootAlias = $queryBuilder->getRootAliases()[0];
-            $queryBuilder
-                ->join(sprintf('%s.plantype', $rootAlias), 'p')
-                ->join(sprintf('%s.ingredients', $rootAlias), 'i')
-                ;
+            $qb = $queryBuilder->getEntityManager()->createQueryBuilder();
+            $recipequery = $qb->select('r')->from(Recipes::class, 'r');
 
-            $firstelem = true;
-            $query = "i.id NOT IN (";
+            $recipes = $recipequery->getQuery()->getResult();
+            $recipetab = [];
 
-            foreach ($user->getAllergen() as $ingredient)
-            {
-                $param = $ingredient->getId();
-                if ($firstelem){
-                    $query = $query . "$param";
-                    $firstelem = false;
+            foreach ($recipes as $recipe) {
+                foreach ($recipe->getIngredients() as $ingredient){
+                    if (in_array ($ingredient->getId(),$allergentab)){
+                        $recipetab[] = $recipe->getId();
+                    }     
                 }
-                else{
-                    $query = $query . ",$param";
-                }
-            }
-            $query = $query . ")";
-            //dd($query);
-            //$queryBuilder->Where($query);
-
-            $firstelem = true;
-            $query = $query . " AND p.id IN (";
-            
-            foreach ($user->getPlan() as $plan)
-            {
-                $param = $plan->getId(); 
-                
-                if ($firstelem){
-                    $query = $query . "$param";
-                    $firstelem = false;
-                }
-                else{
-                    $query = $query . ",$param";
+                foreach ($recipe->getPlantype() as $plan){
+                    if (!(in_array ($plan->getId(), $plantab))){
+                        $recipetab[] = $recipe->getId();
+                    }
                 }
             }
             
-            $query = $query . ")";
-            dd($query);
-            $queryBuilder->Where($query);
-            
+            $recipelist = implode(',',array_unique($recipetab));
+
+            $queryBuilder->where($queryBuilder->expr()->notIN(sprintf('%s.id', $rootAlias), $recipelist));
             return;
         }
 
         $rootAlias = $queryBuilder->getRootAliases()[0];
-        $queryBuilder->andWhere(sprintf('%s.isPublic = :isPublic', $rootAlias));
-        $queryBuilder->setParameter('isPublic', 1);
+        $queryBuilder->andWhere(sprintf('%s.isPublic = 1', $rootAlias));
     }
 }
