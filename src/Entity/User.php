@@ -34,7 +34,6 @@ use Symfony\Component\Validator\Constraints as Constraints;
         'delete'
     ],
 )]
-#[ApiProperty(fetchEager: false)]
 #[UniqueEntity('email')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
